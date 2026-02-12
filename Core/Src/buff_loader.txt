@@ -1,0 +1,78 @@
+// переменные для отслеживания в дебагере
+uint8_t _btn_code = 0;							// удалить после отладки <<++>> <<++>> <<++>>
+uint8_t _press_release_flag = 0;				// удалить после отладки <<++>> <<++>> <<++>>
+uint8_t _zero_byte = 0;							// удалить после отладки <<++>> <<++>> <<++>>
+uint8_t _this_btn_present = 0;					// удалить после отладки <<++>> <<++>> <<++>>
+uint8_t _im_in_1 = 0;							// удалить после отладки <<++>> <<++>> <<++>>
+uint8_t _im_in_2 = 0;							// удалить после отладки <<++>> <<++>> <<++>>
+
+//функция заполнения буфера отправки
+void report_loader_keyboard(void)
+{
+	uint8_t b = buff[0];					// пришедший байт-код
+	uint8_t btn_code = b & 0x7F;			// выделить код клавиши, соответствующий таблице Keyboard/Keypad Page (0x07) HID Usage Descriptions
+	uint8_t press_release_flag = b & 0x80;	// выделить старший байт. 0 = кн нажатаб 1 = кн. отпущена
+
+	// если флаг нажатия кнопки - добавить код в свободный байт репорта
+	if(press_release_flag==0)
+	{
+		uint8_t zero_byte = 0;			// первый нулевой байт
+		uint8_t this_btn_present = 0;	// код нажатой клавиши есть
+		for(uint8_t i=8; i>2; i--)
+		{
+			if(keybrd_report[i]==0) zero_byte = i;	// ищем нулевые байты, самый первый по счету в буфере будет в этой переменной
+			if(keybrd_report[i]==btn_code) this_btn_present = 1; // код нажатой кнопки присутствует в буфере
+		}
+		// если код кнопки ещё не в буфере и пустой байт для кнопок в наличии, заносим в него код кнопки
+		if(this_btn_present==0)
+		{
+			_im_in_1 = 1;								// удалить после отладки <<++>> <<++>> <<++>>
+			if(zero_byte>0)
+			{
+				_im_in_2 = 1;							// удалить после отладки <<++>> <<++>> <<++>>
+				keybrd_report[zero_byte]=btn_code; // : (keybrd_report[zero_byte]=0);
+			}
+			else _im_in_2 = 0;							// удалить после отладки <<++>> <<++>> <<++>>
+		}
+		else _im_in_1 = 0;								// удалить после отладки <<++>> <<++>> <<++>>
+
+		_zero_byte = zero_byte;							// удалить после отладки <<++>> <<++>> <<++>>
+		_this_btn_present = this_btn_present;			// удалить после отладки <<++>> <<++>> <<++>>
+	}
+	else	// если код отпускания кнопки - найти код этой кнопки и заменить нулем
+	{
+		for(uint8_t i=3; i<9; i++)
+		{
+			if(keybrd_report[i]==btn_code)
+			{
+				keybrd_report[i] = 0;
+				//break; // а вдруг там два кода этой кнопки!?
+			}
+		}
+	}
+
+	// переменные для отслеживания в дебагере
+	_btn_code = btn_code;							// удалить после отладки <<++>> <<++>> <<++>>
+	_press_release_flag = press_release_flag;		// удалить после отладки <<++>> <<++>> <<++>>
+
+
+
+
+	// коды CtrlShiftAltGUI вместо Е0-Е7 кодируются как 0x70-0x77
+	// 70 Keyboard LeftControl	0x01
+	// 71 Keyboard LeftShift	0x02
+	// 72 Keyboard LeftAlt		0x04
+	// 73 Keyboard Left GUI		0x08
+	// 74 Keyboard RightControl	0x10
+	// 75 Keyboard RightShift 	0x20
+	// 76 Keyboard RightAlt		0x40
+	// 77 Keyboard Right GUI	0x80
+
+	// if(b==0x70) keybrd_report[1] |= 0x01;
+	// if(b==0x71) keybrd_report[1] |= 0x02;
+	// if(b==0x72) press_release_flag==1 ? keybrd_report[1] |= 0x04 :  keybrd_report[1] &= ~0x04;
+	for(uint8_t i=0; i<8; i++)
+	{
+		if(b==0x70+i) press_release_flag==1 ? (keybrd_report[1] |= (0x01<<i)) :  (keybrd_report[1] &= ~(0x01<<i));
+	}
+}

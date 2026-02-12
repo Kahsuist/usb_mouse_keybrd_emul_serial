@@ -1,0 +1,35 @@
+# STM32CubeIDE / Eclipse based
+.metadata/
+.settings/
+*.launch
+
+# Build artifacts
+Debug/
+Release/
+build/
+*.o
+*.elf
+*.hex
+*.bin
+*.map
+*.lst
+*.su
+*.d
+*.cmake
+*.obj
+
+# Temporary / generated
+*.bak
+*.swp
+*.swo
+*.log
+*.trace
+
+# OS / editor junk
+.DS_Store
+Thumbs.db
+*~
+.#*
+*.bak
+.vscode/        # если используешь VSCode — можно закоммитить tasks.json, но часто игнорят весь .vscode/
+
